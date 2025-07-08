@@ -16,7 +16,8 @@ The goal is to deeply understand the underlying mechanics of these algorithms.
 Replace *knn* with the desired algorithm (*kmeans* or *perceptron*):
 
 ```bash
-cd knn 
+git clone https://github.com/ItzKarizma/fundamental-ml-algorithms-in-c.git
+cd ./fundamental-ml-algorithms-in-c/knn
 gcc -lm knn.c -o knn
 ./knn
 ```
