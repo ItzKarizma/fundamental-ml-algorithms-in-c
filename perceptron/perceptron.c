@@ -238,8 +238,6 @@ Perceptron *load_model(const char *fileName)
         exit(1);
     }
 
-    printf("[load_model] Loaded model successfully (learning rate: %lf)\n", perceptron->learningRate);
-
     fclose(file);
     return perceptron;
 }
@@ -506,7 +504,7 @@ int main(int argc, char *argv[])
         printf("Model path: ");
         scanf("%255s", inputSTR);
         perceptron = load_model(inputSTR);
-        printf("\n");
+        printf("\nModel loaded successfully (learning rate: %lf)\n\n", perceptron->learningRate);
     }
     else
     {
@@ -562,8 +560,8 @@ int main(int argc, char *argv[])
                 );
             }
         }
-        free_dataset(trainDataset);
         printf("\nModel trained succesfully.\n");
+        free_dataset(trainDataset);
     }
     
     // Inference
@@ -586,8 +584,8 @@ int main(int argc, char *argv[])
             printf("Guessed %s\n", (output == sample->label) ? "correctly" : "incorrectly");
             correctGuesses += (output == sample->label) ? 1 : 0;
         }
-        free_dataset(testDataset);
         printf("\nModel accuracy: %.2f\n", ((float)correctGuesses/testDataset->numberOfSamples)*100);
+        free_dataset(testDataset);
     }
     
     // Save the model if necessary
