@@ -26,6 +26,7 @@
 #include <math.h>
 #include <time.h>
 #include <errno.h>
+#include <stdbool.h>
 
 #define MAX_PATH 256
 
@@ -60,7 +61,7 @@ Perceptron;
  * 
  * @returns A pointer to a `Dataset` object containing the samples and the number of samples.
  */
-Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures)
+Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures, bool isLabeled)
 {
     FILE *dataFile = fopen(fileName, "r"); // Does NOT throw, returns NULL upon failure
     if (dataFile == NULL) // File doesn't exist or maybe insufficient permissions to read ?
@@ -121,7 +122,14 @@ Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures)
                 }
                 memcpy(dataset->samples[dataset->numberOfSamples].features, tempFeaturesBuffer, numberOfFeatures * sizeof(double));
 
-                dataset->samples[dataset->numberOfSamples].label = atoi(tokenBuffer);
+                if (isLabeled == true)
+                {
+                    dataset->samples[dataset->numberOfSamples].label = atoi(tokenBuffer);
+                }
+                else
+                {
+                    dataset->samples[dataset->numberOfSamples].label = -1;
+                }
                 
                 ++dataset->numberOfSamples;
                 tokensRead = 0;
@@ -255,6 +263,49 @@ void free_dataset(Dataset *dataset)
     }
     free(dataset->samples);
     free(dataset);
+}
+
+/**
+ * @brief Makes a deep copy of a `Dataset` object.
+ * 
+ * @param dataset A pointer to the `Dataset` object to copy.
+ * @param numberOfFeatures The number of features.
+ * 
+ * @returns A pointer to a newly allocated and copied `Dataset` object.
+ */
+Dataset *deep_copy_dataset(const Dataset *dataset, size_t numberOfFeatures)
+{
+    Dataset *copy = malloc(sizeof(Dataset));
+    if (copy == NULL)
+    {
+        perror("[deep_copy_dataset] Failed to allocate memory for copy");
+        exit(1);
+    }
+
+    copy->samples = malloc(dataset->numberOfSamples * sizeof(Sample));
+    if (copy->samples == NULL)
+    {
+        perror("[deep_copy_dataset] Failed to allocate memory for copy->samples");
+        exit(1);
+    }
+    copy->numberOfSamples = dataset->numberOfSamples;
+
+    for (size_t iSample = 0; iSample < dataset->numberOfSamples; ++iSample)
+    {
+        copy->samples[iSample].features = malloc(numberOfFeatures * sizeof(double));
+        if (copy->samples[iSample].features == NULL)
+        {
+            perror("[deep_copy_dataset] Failed to allocate memory for copy->samples[iSample].features");
+            exit(1);
+        }
+        copy->samples[iSample].label = dataset->samples[iSample].label;
+
+        for (size_t iFeature = 0; iFeature < numberOfFeatures; ++iFeature)
+        {
+            copy->samples[iSample].features[iFeature] = dataset->samples[iSample].features[iFeature];
+        }
+    }
+    return copy;
 }
 
 /**
@@ -485,15 +536,10 @@ int main(int argc, char *argv[])
     srand((unsigned int)time(NULL));
     Perceptron *perceptron;
     
-    // Some input variables that will be used a lot...
+    // Some input variables that will be used for user input...
     unsigned int inputINT = 0;
     double inputDBL = 0.0;
-    char *inputSTR = malloc(256);
-    if (inputSTR == NULL)
-    {
-        perror("[main] Failed to allocate memory for inputSTR");
-        exit(1);
-    }
+    char path[MAX_PATH] = "";
 
     // Load a model if necessary
     printf("Would you like to load a model (0 -> no, 1 -> yes)? ");
@@ -502,8 +548,8 @@ int main(int argc, char *argv[])
     if (inputINT == 1)
     {
         printf("Model path: ");
-        scanf("%255s", inputSTR);
-        perceptron = load_model(inputSTR);
+        scanf("%255s", path);
+        perceptron = load_model(path);
         printf("\nModel loaded successfully (learning rate: %lf)\n\n", perceptron->learningRate);
     }
     else
@@ -528,9 +574,6 @@ int main(int argc, char *argv[])
         scanf("%lf", &inputDBL);
         perceptron->bias = inputDBL;
     }
-    printf("Set a learning rate value (default 0.1): ");
-    scanf("%lf", &inputDBL);
-    perceptron->learningRate = inputDBL;
 
     // Training
     printf("\nTrain the model on a data set (0 -> no, 1 -> yes)? ");
@@ -538,10 +581,14 @@ int main(int argc, char *argv[])
 
     if (inputINT == 1)
     {
-        printf("Data file's path: ");
-        scanf("%255s", inputSTR);
+        printf("Set a learning rate value (default 0.1): ");
+        scanf("%lf", &inputDBL);
+        perceptron->learningRate = inputDBL;
         
-        Dataset *trainDataset = read_data_from_file(inputSTR, perceptron->numberOfFeatures);
+        printf("Data file's path: ");
+        scanf("%255s", path);
+        
+        Dataset *trainDataset = read_data_from_file(path, perceptron->numberOfFeatures, true);
         standardize_data(trainDataset, perceptron->numberOfFeatures);
 
         printf("Set the number of epochs (default 100): ");
@@ -565,15 +612,17 @@ int main(int argc, char *argv[])
     }
     
     // Inference
-    printf("\nTest the model on a data set (0 -> no, 1 -> yes)? ");
+
+    // Labeled
+    printf("\nTest the accuracy of the model on a 'labeled' data set (0 -> no, 1 -> yes)? ");
     scanf("%u", &inputINT);
 
     if (inputINT == 1)
     {
         printf("Data file's path: ");
-        scanf("%255s", inputSTR);
+        scanf("%255s", path);
         
-        Dataset *testDataset = read_data_from_file(inputSTR, perceptron->numberOfFeatures);
+        Dataset *testDataset = read_data_from_file(path, perceptron->numberOfFeatures, true);
         standardize_data(testDataset, perceptron->numberOfFeatures);
 
         size_t correctGuesses = 0;
@@ -584,8 +633,56 @@ int main(int argc, char *argv[])
             printf("Guessed %s\n", (output == sample->label) ? "correctly" : "incorrectly");
             correctGuesses += (output == sample->label) ? 1 : 0;
         }
-        printf("\nModel accuracy: %.2f\n", ((float)correctGuesses/testDataset->numberOfSamples)*100);
+        printf("\nModel accuracy: %.2f%%\n", (float)correctGuesses / testDataset->numberOfSamples * 100);
         free_dataset(testDataset);
+    }
+
+    // Unlabeled
+    printf("\nRun the model on an 'unlabeled' data set (0 -> no, 1 -> yes)? ");
+    scanf("%u", &inputINT);
+
+    if (inputINT == 1)
+    {
+        printf("Data file's path: ");
+        scanf("%255s", path);
+        
+        Dataset *unlabeledDataset = read_data_from_file(path, perceptron->numberOfFeatures, false);
+        Dataset *unlabeledDatasetCopy = deep_copy_dataset(unlabeledDataset, perceptron->numberOfFeatures);
+        standardize_data(unlabeledDataset, perceptron->numberOfFeatures);
+
+        for (size_t iSample = 0; iSample < unlabeledDataset->numberOfSamples; ++iSample)
+        {
+            Sample *sample = &unlabeledDataset->samples[iSample];
+            sample->label = compute_prediction(perceptron, sample); // it's unlabeled so prediction is the only label
+            printf("Guessed %d\n", sample->label);
+        }
+
+        printf("\n\nWould you like to save the results to a file (0 -> no; 1 -> yes)? ");
+        scanf("%d", &inputINT);
+        
+        if (inputINT == 1) // Save
+        {
+            printf("File path (directory must exist): ");
+            scanf("%255s", path);
+            FILE* file = fopen(path, "w");
+            
+            for (size_t iSample = 0; iSample < unlabeledDataset->numberOfSamples; ++iSample)
+            {
+                for (size_t iFeature = 0; iFeature < perceptron->numberOfFeatures; ++iFeature)
+                {
+                    fprintf(file, "%lf ", unlabeledDatasetCopy->samples[iSample].features[iFeature]); // Use copy to get the non-standardized features
+                }
+                fprintf(file, "%d\n", unlabeledDataset->samples[iSample].label);
+            }
+            fclose(file);
+            printf("\nResults saved to file.\n");
+        }
+        else
+        {
+            printf("\nResults were not saved.\n");
+        }
+
+        free_dataset(unlabeledDataset);
     }
     
     // Save the model if necessary
@@ -595,12 +692,11 @@ int main(int argc, char *argv[])
     if (inputINT == 1)
     {
         printf("Model path (directory must exist): ");
-        char path[MAX_PATH]; scanf("%255s", path);
+        scanf("%255s", path);
         save_model(path, perceptron);
         printf("\nModel saved succesfully.\n");
     }
 
-    free(inputSTR);
     free(perceptron->weights);
     free(perceptron);
     return 0;

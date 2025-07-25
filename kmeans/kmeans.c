@@ -93,10 +93,13 @@ Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures)
     {
         if (ch == '\n' || ch == ' ' || tokenBufferSize >= maxTokenLength - 1) // 1 space for null-terminator
         {
-            storeLastValues:
+            storeLastLine:
 
-            tempFeaturesBuffer[tokensRead] = strtod(tokenBuffer, NULL);
-            ++tokensRead;
+            if (tokensRead < numberOfFeatures)
+            {
+                tempFeaturesBuffer[tokensRead] = strtod(tokenBuffer, NULL);
+                ++tokensRead;
+            }
 
             if (ch == '\n' || ch == EOF) // Check for end of line (or file if came from goto)
             {
@@ -132,7 +135,7 @@ Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures)
     // if EOF was encountered instead of a newline
     if (tokenBufferSize > 0)
     {
-        goto storeLastValues;
+        goto storeLastLine;
     }
     // Prevent memory leaks
     free(tempFeaturesBuffer);
@@ -735,7 +738,7 @@ void run_kmeans_to_convergence(Dataset *dataset, Dataset *centroids, size_t numb
     {
         //revivedCentroids = 0; // Reset for the new iteration
 
-        /* int *samplesPerCentroid = */ assign_centroid_to_samples(dataset, centroids, numberOfFeatures);
+        /* size_t *samplesPerCentroid = */ assign_centroid_to_samples(dataset, centroids, numberOfFeatures);
         /* revivedCentroids = handle_empty_centroids(dataset, centroids, samplesPerCentroid, numberOfFeatures); */
         
         // Track modifications by keeping a temporary backup of the data before adjustments are made
@@ -768,7 +771,7 @@ void run_kmeans_to_convergence(Dataset *dataset, Dataset *centroids, size_t numb
  */
 void elbow_method(Dataset *dataset, size_t numberOfFeatures, size_t startK, size_t endK, double tolerance, double dropThreshold, int restarts)
 {
-    int answer = 0;
+    int answerReachMaxK = 0;
     double lastInertia = -1.0;
     
     for (size_t K = startK; K <= endK; ++K)
@@ -796,16 +799,16 @@ void elbow_method(Dataset *dataset, size_t numberOfFeatures, size_t startK, size
             // How much did the inertia value drop by
             double dropK = (lastInertia - bestInertia) / lastInertia; // 0.1 means 10%
 
-            if (dropK < dropThreshold && answer == 0)
+            if (dropK < dropThreshold && answerReachMaxK == 0)
             {
                 printf("Found inertia gains under the drop threshold with K value: %zu (Drop threshold: %lf)\n\n", K, dropThreshold);
 
-                if (startK != endK)
+                if (K != endK)
                 {
                     printf("Would you like to continue until reaching the maximum K desired nonetheless (0 -> no; 1 -> yes)? ");
-                    scanf("%d", &answer);
+                    scanf("%d", &answerReachMaxK);
                 }
-                if (answer == 0) break;
+                if (answerReachMaxK == 0) break;
             }
         }
         lastInertia = bestInertia;
@@ -832,13 +835,23 @@ int main(int argc, char *argv[])
 
     Dataset *dataset = read_data_from_file(path, numberOfFeatures);
     standardize_data(dataset, numberOfFeatures);
-    //output_all_sample_positions(dataset, numberOfFeatures); // For debugging
+    //output_all_sample_features(dataset, numberOfFeatures); // For debugging
     
-    printf("Would you like to set a custom K value (0 -> no; 1 -> yes)? ");
+    printf("Would you like to use the elbow method (0 -> no; 1 -> yes)? ");
     int answer; scanf("%d", &answer);
 
     size_t K = 1; // default K value
-    if (answer == 1) // Don't use the elbow method
+    if (answer == 1)
+    {
+        printf("Enter the maximum K value (default 10): ");
+        size_t maxK = 10; scanf("%zu", &maxK);
+
+        printf("Enter the drop threshold for the elbow method (default 0.1): ");
+        double dropThreshold = 0.1; scanf("%lf", &dropThreshold); // The difference between the inertia values of K-1 and K
+
+        elbow_method(dataset, numberOfFeatures, K, maxK, tolerance, dropThreshold, restarts);
+    }
+    else // Don't use the elbow method
     {
         printf("K centroids: ");
         scanf("%zu", &K); // The number of centroids
@@ -871,16 +884,6 @@ int main(int argc, char *argv[])
 
         // Output the calculated total Inertia (WCSS) value
         printf("K = %zu, Inertia = %.6f, Per-Sample SSE = %lf\n", K, bestInertia, bestInertia / dataset->numberOfSamples); // K value, Total inertia value, AVG per-sample inertia
-    }
-    else
-    {
-        printf("Enter the maximum K value (default 10): ");
-        size_t maxK = 10; scanf("%zu", &maxK);
-
-        printf("Enter the drop threshold for the elbow method (default 0.1): ");
-        double dropThreshold = 0.1; scanf("%lf", &dropThreshold); // The difference between the inertia values of K-1 and K
-
-        elbow_method(dataset, numberOfFeatures, K, maxK, tolerance, dropThreshold, restarts);
     }
 
     free_dataset(dataset);
