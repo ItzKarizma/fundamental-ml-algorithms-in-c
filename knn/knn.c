@@ -3,7 +3,7 @@
  *
  *  Author      :  ItzKarizma  <https://github.com/ItzKarizma>
  *  Created     :  25 Jun 2025
- *  Last update :  26 Jun 2025
+ *  Last update :  31 Aug 2025
  *
  *  Build       :  gcc -lm knn.c -o knn
  *  Usage       :  ./knn
@@ -57,19 +57,19 @@ LabelStats;
 
 /**
  * @brief Reads data from a specific file.
- * 
+ *
  * My hard working char-by-char method.
  * Even God is confused how this function works.
- * 
+ *
  * @attention It assumes that if the number of features are N,
- * 
+ *
  * there are N+1 separate values (label included) per line.
- * 
+ *
  * For example, for numberOfFeatures = 2, a line would be "feature1 feature2 label".
- * 
+ *
  * @param fileName The name of the file to read.
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns A pointer to a `Dataset` object containing the samples and its size.
  */
 Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures, bool isLabeled)
@@ -100,7 +100,7 @@ Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures, bool isLab
     }
     tokenBuffer[0] = '\0';
     size_t tokenBufferSize = 0;
-    
+
     char ch;
     size_t tokensRead = 0;
 
@@ -119,7 +119,7 @@ Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures, bool isLab
             if (ch == '\n' || ch == EOF) // Check for end of line (or EOF if came from goto)
             {
                 dataset->samples = realloc(dataset->samples, (dataset->numberOfSamples + 1) * sizeof(Sample)); // realloc can act as malloc too in case of initialization
-                if (dataset->samples == NULL) // check 
+                if (dataset->samples == NULL) // check
                 {
                     perror("[read_data_from_file] Failed to re-allocate memory for dataset->samples");
                     exit(1);
@@ -176,7 +176,7 @@ Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures, bool isLab
 
 /**
  * @brief Frees a `Dataset` object.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
  */
 void free_dataset(Dataset *dataset)
@@ -192,10 +192,10 @@ void free_dataset(Dataset *dataset)
 
 /**
  * @brief Makes a deep copy of a `Dataset` object.
- * 
+ *
  * @param dataset A pointer to the `Dataset` object to copy.
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns A pointer to a newly allocated and copied `Dataset` object.
  */
 Dataset *deep_copy_dataset(const Dataset *dataset, size_t numberOfFeatures)
@@ -236,12 +236,12 @@ Dataset *deep_copy_dataset(const Dataset *dataset, size_t numberOfFeatures)
 
 /**
  * @brief Calculates the mean for each feature.
- * 
+ *
  * @attention Assumes dataset->numberOfSamples is greater than 0.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns An array containing the mean value of each feature.
  */
 double *calculate_mean(const Dataset *dataset, size_t numberOfFeatures)
@@ -274,13 +274,13 @@ double *calculate_mean(const Dataset *dataset, size_t numberOfFeatures)
 
 /**
  * @brief Calculates the standard deviation for each feature.
- * 
+ *
  * @attention Assumes dataset->numberOfSamples is greater than 0.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
  * @param mean An array containing the mean value of each feature.
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns An array containing the standard deviation of every feature.
  */
 double *calculate_std_deviation(const Dataset *dataset, const double *mean, size_t numberOfFeatures)
@@ -316,15 +316,15 @@ double *calculate_std_deviation(const Dataset *dataset, const double *mean, size
 
 /**
  * @brief Standardizes the features of the whole dataset and those of the new sample.
- * 
+ *
  * x(standardized​) = (x − μ)​ / σ
- * 
+ *
  * @attention Modifies all sample features in-place
- * 
+ *
  * instead of returning a new `Sample` with the modified values.
- * 
+ *
  * Exits with an error message if a division by 0 occurs.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
  * @param numberOfFeatures The number of features.
  */
@@ -359,11 +359,11 @@ void standardize_data(Dataset *dataset, const double *mean, const double *standa
 
 /**
  * @brief Calculates the Euclidian distance between two samples.
- * 
+ *
  * @param sample1 The first sample.
  * @param sample2 The second sample.
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns The Euclidian distance between `sample1` and `sample2`.
  */
 double calculate_euclidian_distance(const Sample *sample1, const Sample *sample2, size_t numberOfFeatures)
@@ -381,11 +381,11 @@ double calculate_euclidian_distance(const Sample *sample1, const Sample *sample2
 
 /**
  * @brief Finds the farthest sample in an array of samples.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
  * @param sample The main sample.
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns An array containing the index and euclidian distance of the farthest sample in `dataset->samples`.
  */
 double *find_farthest_sample(const Dataset *dataset, const Sample *sample, size_t numberOfFeatures)
@@ -398,7 +398,7 @@ double *find_farthest_sample(const Dataset *dataset, const Sample *sample, size_
     {
         // Euclidean distance
         double euclidianDistance = calculate_euclidian_distance(sample, &dataset->samples[iSample], numberOfFeatures);
-        
+
         // Store the sample's index and distance if necessary
         if (euclidianDistance > farthestSample[1])
         {
@@ -411,14 +411,14 @@ double *find_farthest_sample(const Dataset *dataset, const Sample *sample, size_
 
 /**
  * @brief Returns the K nearest samples (neighbors).
- * 
+ *
  * @attention Assumes `K` is smaller or equal to the total number of samples.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
  * @param sample The main sample.
  * @param numberOfFeatures The number of features.
  * @param K The number of the neighboring (nearest) samples to check for.
- * 
+ *
  * @returns `Dataset *neighbors`, all the nearest neighbors of the `sample`.
  */
 Dataset *get_K_nearest_neighbors(const Dataset *dataset, const Sample *sample, size_t numberOfFeatures, size_t K)
@@ -486,9 +486,9 @@ Dataset *get_K_nearest_neighbors(const Dataset *dataset, const Sample *sample, s
 
 /**
  * @brief Counts the number of different data labels.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
- * 
+ *
  * @returns A `LabelStats` object containing all the different labels and their frequencies.
  */
 LabelStats get_label_stats(const Dataset *dataset)
@@ -513,9 +513,9 @@ LabelStats get_label_stats(const Dataset *dataset)
         else // Increase the size of the array if needed & store the label
         {
             // Apparently, `realloc(NULL, size) si the same as malloc(size)` :)
-            labels = realloc(labels, (labelsSize + 1) * sizeof(char*)); 
+            labels = realloc(labels, (labelsSize + 1) * sizeof(char*));
             labelFrequencies = realloc(labelFrequencies, (labelsSize + 1) * sizeof(size_t));
-            
+
             if (labels != NULL && labelFrequencies != NULL)
             {
                 labels[labelsSize] = strdup(dataset->samples[iSample].label); // Copy the string and sample to it
@@ -538,12 +538,12 @@ LabelStats get_label_stats(const Dataset *dataset)
 
 /**
  * @brief Classifies a sample based on the highest label frequencies.
- * 
+ *
  * @attention K should be an odd number because the classification
  * is a majority vote ('even' numbers do not work well).
- * 
+ *
  * @param neighbors A pointer to a `Dataset` object containing the array of K nearest samples and its count.
- * 
+ *
  * @returns The predicted label for the new sample.
  */
 const char *classify_data(const Dataset *neighbors)
@@ -566,10 +566,10 @@ const char *classify_data(const Dataset *neighbors)
 int main(int argc, char *argv[])
 {
     unsigned int answer; // for questions
-    
+
     printf("Number of features (label not included): ");
     size_t numberOfFeatures = 0; scanf("%zu", &numberOfFeatures); // The number of features (label is not included in this number)
-    
+
     // If `K >= samples available`, it's simply a majority vote between all samples...
     printf("K neighbors: ");
     size_t K; scanf("%zu", &K); // K neighbors
@@ -582,7 +582,10 @@ int main(int argc, char *argv[])
 
     double *mean = calculate_mean(dataset, numberOfFeatures); // freed at the end of main function
     double *standardDeviation = calculate_std_deviation(dataset, mean, numberOfFeatures);  // freed at the end of main function
-    standardize_data(dataset, mean, standardDeviation, numberOfFeatures);
+
+    printf("Would you like to standardize the values (0 -> no; 1 -> yes)? ");
+    int standardizeValues; scanf("%d", &standardizeValues);
+    if (standardizeValues == 1) standardize_data(dataset, mean, standardDeviation, numberOfFeatures);
 
     printf("Would you like to do an accuracy test (0 -> no; 1 -> yes)? ");
     scanf("%d", &answer);
@@ -592,7 +595,7 @@ int main(int argc, char *argv[])
         printf("\nTest data file's path: ");
         scanf("%255s", path);
         Dataset *datasetTest = read_data_from_file(path, numberOfFeatures, true);
-        standardize_data(datasetTest, mean, standardDeviation, numberOfFeatures);
+        if (standardizeValues == 1) standardize_data(datasetTest, mean, standardDeviation, numberOfFeatures);
 
         size_t correctPredictions = 0;
         repeatAccuracyTest:
@@ -607,7 +610,7 @@ int main(int argc, char *argv[])
             free_dataset(neighbors);
         }
 
-        printf("\n\nAccuracy with K=%zu: %0.2f%", K, (float)correctPredictions / datasetTest->numberOfSamples * 100);
+        printf("\n\nAccuracy with K=%zu: %0.2f%%", K, (float)correctPredictions / datasetTest->numberOfSamples * 100);
         correctPredictions = 0;
 
         printf("\nUpdate K and retry (0 -> no; 1 -> yes)? ");
@@ -618,7 +621,7 @@ int main(int argc, char *argv[])
             scanf("%zu", &K); // K neighbors
             goto repeatAccuracyTest;
         }
-        
+
         free(datasetTest);
     }
 
@@ -642,7 +645,7 @@ int main(int argc, char *argv[])
         {
             printf("\nNumber of samples: ");
             size_t numberOfSamples; scanf("%zu", &numberOfSamples);
-            
+
             // Allocate memory for the dataset and the samples
 
             unlabeledDataset = malloc(numberOfSamples * sizeof(Sample));
@@ -671,7 +674,7 @@ int main(int argc, char *argv[])
                     perror("[main] Failed to allocate memory for unlabeledDataset->samples[iSample].features");
                     exit(1);
                 }
-                
+
                 printf("\n-- Enter the features of the sample %zu --\n", iSample+1);
 
                 size_t iFeature = 0;
@@ -685,8 +688,8 @@ int main(int argc, char *argv[])
             }
         }
         Dataset *unlabeledDatasetCopy = deep_copy_dataset(unlabeledDataset, numberOfFeatures); // To save samples with non-standardized features and their respective label, if needed
-        standardize_data(unlabeledDataset, mean, standardDeviation, numberOfFeatures);
-    
+        if (standardizeValues == 1) standardize_data(unlabeledDataset, mean, standardDeviation, numberOfFeatures);
+
         for (size_t iSample = 0; iSample < unlabeledDataset->numberOfSamples; ++iSample)
         {
             Dataset *neighbors = get_K_nearest_neighbors(dataset, &unlabeledDataset->samples[iSample], numberOfFeatures, K);
@@ -706,14 +709,14 @@ int main(int argc, char *argv[])
                 exit(1);
             }
             unlabeledDataset->samples[iSample].label = strdup(predictedLabel);
-            
+
             printf("\nSample %zu was labeled as: %s\n", iSample+1, predictedLabel);
             free_dataset(neighbors);
         }
 
         printf("\n\nWould you like to save the results to a file (0 -> no; 1 -> yes)? ");
         scanf("%d", &answer); // re-use variable answer
-        
+
         if (answer == 1) // Save
         {
             printf("File path (directory must exist): ");
@@ -729,7 +732,7 @@ int main(int argc, char *argv[])
                 fprintf(file, "%s\n", unlabeledDataset->samples[iSample].label);
             }
             fclose(file);
-            
+
             printf("\nResults saved to file.\n");
         }
         else
@@ -742,6 +745,6 @@ int main(int argc, char *argv[])
     free(mean);
     free(standardDeviation);
     free_dataset(dataset);
-    
+
     return 0;
 }

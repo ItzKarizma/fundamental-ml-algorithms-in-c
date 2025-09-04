@@ -3,7 +3,7 @@
  *
  *  Author      :  ItzKarizma  <https://github.com/ItzKarizma>
  *  Created     :  03 Jul 2025
- *  Last update :  06 Jul 2025
+ *  Last update :  01 Sep 2025
  *
  *  Build       :  gcc -lm perceptron.c -o perceptron
  *  Usage       :  ./perceptron
@@ -55,10 +55,10 @@ Perceptron;
 
 /**
  * @brief Reads data from a specific file.
- * 
+ *
  * @param file_name The name of the file to read.
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns A pointer to a `Dataset` object containing the samples and the number of samples.
  */
 Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures, bool isLabeled)
@@ -88,7 +88,7 @@ Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures, bool isLab
     }
     tokenBuffer[0] = '\0';
     size_t tokenBufferSize = 0;
-    
+
     char ch;
     size_t tokensRead = 0;
 
@@ -107,12 +107,12 @@ Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures, bool isLab
             if (ch == '\n' || ch == EOF) // Check for end of line (or EOF if came from goto)
             {
                 dataset->samples = realloc(dataset->samples, (dataset->numberOfSamples + 1) * sizeof(Sample)); // realloc can act as malloc too in case of initialization
-                if (dataset->samples == NULL) // check 
+                if (dataset->samples == NULL) // check
                 {
                     perror("[read_data_from_file] Failed reallocating memory for dataset->samples");
                     exit(1);
                 }
-                
+
 
                 dataset->samples[dataset->numberOfSamples].features = malloc(numberOfFeatures * sizeof(double));
                 if (dataset->samples[dataset->numberOfSamples].features == NULL)
@@ -130,7 +130,7 @@ Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures, bool isLab
                 {
                     dataset->samples[dataset->numberOfSamples].label = -1;
                 }
-                
+
                 ++dataset->numberOfSamples;
                 tokensRead = 0;
             }
@@ -160,12 +160,12 @@ Dataset *read_data_from_file(char *fileName, size_t numberOfFeatures, bool isLab
 
 /**
  * @brief Saves the model's parameters to a file.
- * 
+ *
  * @attention Overwrites the file. Old file data is lost!
- * 
+ *
  * @param fileName The name of the file to write to.
  * @param perceptron A pointer to the `Perceptron` model to save.
- * 
+ *
  * @note Saves the number of features/weights, the weights, bias, and learning rate.
  */
 void save_model(const char *fileName, const Perceptron *perceptron)
@@ -188,9 +188,9 @@ void save_model(const char *fileName, const Perceptron *perceptron)
 
 /**
  * @brief Loads a model's parameters from a file.
- * 
+ *
  * @param fileName The model's path (e.g.: models/model.txt).
- * 
+ *
  * @returns A pointer to the initialized perceptron object.
  */
 Perceptron *load_model(const char *fileName)
@@ -252,7 +252,7 @@ Perceptron *load_model(const char *fileName)
 
 /**
  * @brief Frees a `Dataset` object.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
  */
 void free_dataset(Dataset *dataset)
@@ -267,10 +267,10 @@ void free_dataset(Dataset *dataset)
 
 /**
  * @brief Makes a deep copy of a `Dataset` object.
- * 
+ *
  * @param dataset A pointer to the `Dataset` object to copy.
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns A pointer to a newly allocated and copied `Dataset` object.
  */
 Dataset *deep_copy_dataset(const Dataset *dataset, size_t numberOfFeatures)
@@ -310,7 +310,7 @@ Dataset *deep_copy_dataset(const Dataset *dataset, size_t numberOfFeatures)
 
 /**
  * @brief Updates weights and bias in-place.
- * 
+ *
  * @param perceptron Pointer to the perceptron whose weights/bias will be updated.
  * @param sample Pointer to the training sample that triggered the update.
  * @param error Signed error term: (label − prediction). Values are −1, 0, or +1.
@@ -328,10 +328,10 @@ void update_parameters(Perceptron *perceptron, const Sample *sample, int error)
 
 /**
  * @brief Computes the perceptron’s output for one sample.
- * 
+ *
  * @param perceptron Pointer to the trained (or partially trained) model.
  * @param sample Pointer to the input whose class you want to predict.
- * 
+ *
  * @returns `1` if output is bigger or equal to 0, otherwise `0`.
  */
 int compute_prediction(const Perceptron *perceptron, const Sample *sample)
@@ -346,9 +346,9 @@ int compute_prediction(const Perceptron *perceptron, const Sample *sample)
 
 /**
  * @brief Creates a perceptron sample out of user's input.
- * 
+ *
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns A pointer to a `Sample` object.
  */
 Sample *get_sample(size_t numberOfFeatures)
@@ -380,19 +380,19 @@ Sample *get_sample(size_t numberOfFeatures)
 
 /**
  * @brief Calculates the mean for each feature.
- * 
+ *
  * @attention Assumes dataset->numberOfSamples is greater than 0.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns An array containing the mean value of each feature.
  */
 double *calculate_mean(const Dataset *dataset, size_t numberOfFeatures)
 {
     // Mean value for each feature (initialized with 0s)
     double *mean = calloc(numberOfFeatures, sizeof(double));
-    if (mean == NULL) // check 
+    if (mean == NULL) // check
     {
         perror("[calculate_mean] Failed allocating memory for `mean`.");
         exit(1);
@@ -418,20 +418,20 @@ double *calculate_mean(const Dataset *dataset, size_t numberOfFeatures)
 
 /**
  * @brief Calculates the standard deviation for each feature.
- * 
+ *
  * @attention Assumes `dataset->numberOfSamples` is greater than 0.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
  * @param mean An array containing the standard deviation of each feature.
  * @param numberOfFeatures The number of features.
- * 
+ *
  * @returns An array containing the standard deviation of every feature.
  */
 double *calculate_std_deviation(const Dataset *dataset, const double *mean, size_t numberOfFeatures)
 {
     // Standard deviation value for each feature (initialized with 0s)
     double *standardDeviation = calloc(numberOfFeatures, sizeof(double));
-    if (standardDeviation == NULL) // check 
+    if (standardDeviation == NULL) // check
     {
         perror("[calculate_std_deviation] Failed allocating memory for standardDeviation");
         exit(1);
@@ -460,15 +460,15 @@ double *calculate_std_deviation(const Dataset *dataset, const double *mean, size
 
 /**
  * @brief Standardizes the features of the whole dataset.
- * 
- * x(standardized​) = (x − μ)​ / σ
- * 
+ *
+ * x(standardized) = (x − μ) / σ
+ *
  * @attention Modifies all sample features in-place
- * 
+ *
  * instead of returning a new `Sample *` with the modified values.
- * 
+ *
  * Exits with an error message if a division by 0 occurs.
- * 
+ *
  * @param dataset A pointer to a `Dataset` object containing the array of samples and its count.
  * @param numberOfFeatures The number of features.
  */
@@ -511,9 +511,9 @@ void standardize_data(Dataset *dataset, size_t numberOfFeatures)
 
 /**
  * @brief Initializes the perceptron's weights with random values.
- * 
+ *
  * @param perceptron Pointer to the `Perceptron` model whose weights will be initialized with random values.
- * 
+ *
  * @note Weights will be random but centered around 0.
  */
 void init_random_weights(Perceptron *perceptron)
@@ -535,7 +535,7 @@ int main(int argc, char *argv[])
 {
     srand((unsigned int)time(NULL));
     Perceptron *perceptron;
-    
+
     // Some input variables that will be used for user input...
     unsigned int inputINT = 0;
     double inputDBL = 0.0;
@@ -575,6 +575,9 @@ int main(int argc, char *argv[])
         perceptron->bias = inputDBL;
     }
 
+    printf("Would you like to standardize the values (0 -> no; 1 -> yes)? ");
+    int standardizeValues; scanf("%d", &standardizeValues);
+
     // Training
     printf("\nTrain the model on a data set (0 -> no, 1 -> yes)? ");
     scanf("%u", &inputINT);
@@ -584,12 +587,12 @@ int main(int argc, char *argv[])
         printf("Set a learning rate value (default 0.1): ");
         scanf("%lf", &inputDBL);
         perceptron->learningRate = inputDBL;
-        
+
         printf("Data file's path: ");
         scanf("%255s", path);
-        
+
         Dataset *trainDataset = read_data_from_file(path, perceptron->numberOfFeatures, true);
-        standardize_data(trainDataset, perceptron->numberOfFeatures);
+        if (standardizeValues == 1) standardize_data(trainDataset, perceptron->numberOfFeatures);
 
         printf("Set the number of epochs (default 100): ");
         scanf("%u", &inputINT);
@@ -610,7 +613,7 @@ int main(int argc, char *argv[])
         printf("\nModel trained succesfully.\n");
         free_dataset(trainDataset);
     }
-    
+
     // Inference
 
     // Labeled
@@ -621,9 +624,9 @@ int main(int argc, char *argv[])
     {
         printf("Data file's path: ");
         scanf("%255s", path);
-        
+
         Dataset *testDataset = read_data_from_file(path, perceptron->numberOfFeatures, true);
-        standardize_data(testDataset, perceptron->numberOfFeatures);
+        if (standardizeValues == 1) standardize_data(testDataset, perceptron->numberOfFeatures);
 
         size_t correctGuesses = 0;
         for (size_t iSample = 0; iSample < testDataset->numberOfSamples; ++iSample)
@@ -645,10 +648,10 @@ int main(int argc, char *argv[])
     {
         printf("Data file's path: ");
         scanf("%255s", path);
-        
+
         Dataset *unlabeledDataset = read_data_from_file(path, perceptron->numberOfFeatures, false);
         Dataset *unlabeledDatasetCopy = deep_copy_dataset(unlabeledDataset, perceptron->numberOfFeatures);
-        standardize_data(unlabeledDataset, perceptron->numberOfFeatures);
+        if (standardizeValues == 1) standardize_data(unlabeledDataset, perceptron->numberOfFeatures);
 
         for (size_t iSample = 0; iSample < unlabeledDataset->numberOfSamples; ++iSample)
         {
@@ -659,13 +662,13 @@ int main(int argc, char *argv[])
 
         printf("\n\nWould you like to save the results to a file (0 -> no; 1 -> yes)? ");
         scanf("%d", &inputINT);
-        
+
         if (inputINT == 1) // Save
         {
             printf("File path (directory must exist): ");
             scanf("%255s", path);
             FILE* file = fopen(path, "w");
-            
+
             for (size_t iSample = 0; iSample < unlabeledDataset->numberOfSamples; ++iSample)
             {
                 for (size_t iFeature = 0; iFeature < perceptron->numberOfFeatures; ++iFeature)
@@ -684,7 +687,7 @@ int main(int argc, char *argv[])
 
         free_dataset(unlabeledDataset);
     }
-    
+
     // Save the model if necessary
     printf("\nSave the model (0 -> no, 1 -> yes)? ");
     scanf("%u", &inputINT);
